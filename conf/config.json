@@ -1,8 +1,10 @@
 {
-  "jdbc": {
-    "provider_class": "io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider",
-    "jdbcUrl": "jdbc:sqlite:conf/eve.db",
-    "driverClassName": "org.sqlite.JDBC",
-    "maximumPoolSize": 30
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "database": "eve",
+    "user": "postgres",
+    "password": "postgres",
+    "maxPoolSize": 20
   }
 }

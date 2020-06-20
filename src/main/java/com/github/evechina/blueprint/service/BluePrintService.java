@@ -1,11 +1,12 @@
 package com.github.evechina.blueprint.service;
 
+import com.github.evechina.blueprint.utils.PgPoolHelper;
 import domain.*;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.ext.sql.SQLClient;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Row;
+import io.vertx.reactivex.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,19 +24,17 @@ public class BluePrintService {
 
   private static BluePrintService instance;
 
-  public static BluePrintService init(SQLClient client) {
-    instance = new BluePrintService(client);
-    return instance;
+  public static void init() {
+    instance = new BluePrintService();
   }
 
   public static BluePrintService getInstance() {
     return Objects.requireNonNull(instance, "请初始化后再调用");
   }
 
-  private final SQLClient client;
+  private final PgPool client = PgPoolHelper.getPgPool();
 
-  private BluePrintService(SQLClient client) {
-    this.client = client;
+  private BluePrintService() {
   }
 
   /**
@@ -45,16 +44,15 @@ public class BluePrintService {
    * @return 符合条件的蓝图
    */
   public Single<List<BluePrint>> findAllByName(String name) {
-    String sql = "select bp.id, bp.maxProductionLimit, (select value from type_i18n where typeId = bp.id and key = 'name' and language = 'zh') AS name from blueprint bp where bp.id in (select typeId from type_i18n where key = 'name' and language = 'zh' and value like '%' || ? || '%');";
-    JsonArray params = new JsonArray().add(name);
-    return client.rxQueryWithParams(sql, params).flatMap(resultSet -> {
+    String sql = "select bp.id, bp.maxProductionLimit, (select value from eve.type_i18n where typeId = bp.id and key = 'name' and language = 'zh') AS name from eve.blueprint bp where bp.id in (select typeId from eve.type_i18n where key = 'name' and language = 'zh' and value like '%' || $1 || '%');";
+    Tuple params = Tuple.of(name);
+    return client.preparedQuery(sql).rxExecute(params).flatMap(resultSet -> {
       try {
-        List<JsonObject> rows = resultSet.getRows();
-        List<BluePrint> bluePrints = new ArrayList<>(rows.size());
-        for (JsonObject row : rows) {
+        List<BluePrint> bluePrints = new ArrayList<>(resultSet.size());
+        for (Row row : resultSet) {
           int id = row.getInteger("id");
           String bluePrintName = row.getString("name");
-          int maxProductionLimit = row.getInteger("maxProductionLimit");
+          int maxProductionLimit = row.getInteger("maxProductionLimit".toLowerCase());
           BluePrint bluePrint = new BluePrint(id, bluePrintName, maxProductionLimit);
           bluePrints.add(bluePrint);
         }
@@ -72,14 +70,14 @@ public class BluePrintService {
    * @return 制造业数据
    */
   public Single<Manufacturing> getManufacturing(int typeId) {
-    String sql = "select ba.time from blueprint_activity ba where ba.id = ? and ba.type = 2;";
-    JsonArray params = new JsonArray().add(typeId);
-    return client.rxQueryWithParams(sql, params).flatMap(resultSet -> {
-      if (resultSet.getNumRows() == 0) {
+    String sql = "select ba.time from eve.blueprint_activity ba where ba.id = $1 and ba.type = 2;";
+    Tuple params = Tuple.of(typeId);
+    return client.preparedQuery(sql).rxExecute(params).flatMap(resultSet -> {
+      if (resultSet.rowCount() == 0) {
         return Single.error(new RuntimeException("该蓝图不能进行制造"));
       }
-      List<JsonObject> rows = resultSet.getRows();
-      long time = rows.get(0).getLong("time");
+      Row row = resultSet.iterator().next();
+      long time = row.getLong("time");
       Manufacturing manufacturing = new Manufacturing();
       manufacturing.setTime(time);
       return Single.just(typeId).flatMap(id -> {
@@ -99,12 +97,11 @@ public class BluePrintService {
   }
 
   private Single<List<Item>> getBluePrintMaterials(int id) {
-    String sql = "select bm.typeId as id, ti.value as name, t.volume, bm.quantity from blueprint_material bm left join type t on bm.typeId = t.id left join type_i18n ti on t.id = ti.typeId where bm.id = ? and bm.activityType = 2 and ti.language = 'zh' and ti.key = 'name';";
+    String sql = "select bm.typeId as id, ti.value as name, t.volume, bm.quantity from eve.blueprint_material bm left join eve.type t on bm.typeId = t.id left join eve.type_i18n ti on t.id = ti.typeId where bm.id = $1 and bm.activityType = 2 and ti.language = 'zh' and ti.key = 'name';";
     List<Item> materials = new ArrayList<>();
-    JsonArray params = new JsonArray().add(id);
-    return client.rxQueryWithParams(sql, params).flatMap(resultSet -> {
-      List<JsonObject> rows = resultSet.getRows();
-      for (JsonObject row : rows) {
+    Tuple params = Tuple.of(id);
+    return client.preparedQuery(sql).rxExecute(params).flatMap(resultSet -> {
+      for (Row row : resultSet) {
         int materialId = row.getInteger("id");
         String name = row.getString("name");
         float volume = row.getFloat("volume");
@@ -141,11 +138,10 @@ public class BluePrintService {
   }
 
   private Single<Item> getBluePrintProduct(int id) {
-    String sql = "select bp.typeId as id, ti.value as name, t.volume as volume, bp.quantity as quantity from blueprint_product bp left join type t on bp.typeId = t.id left join type_i18n ti on bp.typeId = ti.typeId where bp.id = ? and bp.activityType = 2 and ti.language = 'zh' and ti.key = 'name';";
-    JsonArray params = new JsonArray().add(id);
-    return client.rxQueryWithParams(sql, params).flatMap(resultSet -> {
-      List<JsonObject> rows = resultSet.getRows();
-      JsonObject row = rows.get(0);
+    String sql = "select bp.typeId as id, ti.value as name, t.volume as volume, bp.quantity as quantity from eve.blueprint_product bp left join eve.type t on bp.typeId = t.id left join eve.type_i18n ti on bp.typeId = ti.typeId where bp.id = $1 and bp.activityType = 2 and ti.language = 'zh' and ti.key = 'name';";
+    Tuple params = Tuple.of(id);
+    return client.preparedQuery(sql).rxExecute(params).flatMap(resultSet -> {
+      Row row = resultSet.iterator().next();
       int productId = row.getInteger("id");
       String productName = row.getString("name");
       float volume = row.getFloat("volume");

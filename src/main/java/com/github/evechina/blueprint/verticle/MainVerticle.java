@@ -2,40 +2,52 @@ package com.github.evechina.blueprint.verticle;
 
 import com.github.evechina.blueprint.service.BluePrintService;
 import com.github.evechina.blueprint.service.PriceService;
+import com.github.evechina.blueprint.utils.PgPoolHelper;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
+import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.file.FileSystem;
-import io.vertx.reactivex.ext.jdbc.JDBCClient;
-import io.vertx.reactivex.ext.sql.SQLClient;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import org.flywaydb.core.Flyway;
 
 public class MainVerticle extends AbstractVerticle {
 
-  private SQLClient client;
+  private PgPool pgPool;
 
   @Override
   public Completable rxStart() {
     JsonObject config = getConfig();
-    JsonObject jdbc = config.getJsonObject("jdbc");
-    client = initSQLClient(vertx, jdbc);
-    BluePrintService.init(client);
+    JsonObject db = config.getJsonObject("db");
+    pgPool = initPgPool(vertx, db);
+    PgPoolHelper.init(pgPool);
+    BluePrintService.init();
     PriceService.init(vertx);
-    return deploy(new HttpVerticle()).ignoreElement();
+    return deploy(new HttpVerticle())
+      .flatMap(unused -> deployWorker(new ScheduledTaskVerticle()))
+      .ignoreElement();
   }
 
   @Override
   public Completable rxStop() {
-    if (null != client) {
-      return client.rxClose();
+    if (null != pgPool) {
+      pgPool.close();
     }
     return Completable.complete();
   }
 
   private Single<String> deploy(Verticle verticle, DeploymentOptions options) {
+    return vertx.rxDeployVerticle(verticle, options);
+  }
+
+  private Single<String> deployWorker(Verticle verticle) {
+    DeploymentOptions options = new DeploymentOptions();
+    options.setWorker(true);
     return vertx.rxDeployVerticle(verticle, options);
   }
 
@@ -56,23 +68,33 @@ public class MainVerticle extends AbstractVerticle {
     if (fileSystem.existsBlocking(defaultPath)) {
       return fileSystem.readFileBlocking(defaultPath).toJsonObject();
     }
-    JsonObject config = config();
-    return config;
+    return config();
   }
 
-  public static JDBCClient initSQLClient(Vertx vertx, JsonObject jdbcConfig) {
-    if (null == jdbcConfig) {
+  public static PgPool initPgPool(Vertx vertx, JsonObject dbConfig) {
+    if (null == dbConfig) {
       throw new RuntimeException("请配置数据源信息");
     }
-    String providerClass = jdbcConfig.getString("provider_class");
-    String url = jdbcConfig.getString("jdbcUrl");
-    String driverClass = jdbcConfig.getString("driverClassName");
-    int maxPoolSize = jdbcConfig.getInteger("maximumPoolSize", 30);
-    JsonObject config = new JsonObject()
-      .put("provider_class", providerClass)
-      .put("jdbcUrl", url)
-      .put("driverClassName", driverClass)
-      .put("maximumPoolSize", maxPoolSize);
-    return JDBCClient.createShared(vertx, config);
+    String host = dbConfig.getString("host");
+    Integer port = dbConfig.getInteger("port");
+    String database = dbConfig.getString("database");
+    String user = dbConfig.getString("user");
+    String password = dbConfig.getString("password");
+    int maxPoolSize = dbConfig.getInteger("maxPoolSize", 30);
+    PgConnectOptions connectOptions = new PgConnectOptions()
+      .setHost(host)
+      .setPort(port)
+      .setDatabase(database)
+      .setUser(user)
+      .setPassword(password);
+    PoolOptions poolOptions = new PoolOptions().setMaxSize(maxPoolSize);
+    initFlywayDB(host, port, database, user, password);
+    return PgPool.pool(vertx, connectOptions, poolOptions);
+  }
+
+  private static void initFlywayDB(String host, int port, String database, String user, String password) {
+    String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+    Flyway flyway = Flyway.configure().dataSource(jdbcUrl, user, password).load();
+    flyway.migrate();
   }
 }

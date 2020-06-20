@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.ext.jdbc.JDBCClient;
+import io.vertx.reactivex.pgclient.PgPool;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +16,8 @@ class BluePrintServiceTest {
   @BeforeAll
   static void init(Vertx vertx) {
     JsonObject config = vertx.fileSystem().readFileBlocking("conf/config.json").toJsonObject();
-    JDBCClient jdbcClient = MainVerticle.initSQLClient(vertx, config.getJsonObject("jdbc"));
-    BluePrintService.init(jdbcClient);
+    PgPool client = MainVerticle.initPgPool(vertx, config.getJsonObject("db"));
+    BluePrintService.init();
   }
 
   @Test
