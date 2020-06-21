@@ -3,17 +3,19 @@ package com.github.evechina.blueprint.service;
 
 import com.github.evechina.blueprint.utils.PgPoolHelper;
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
-
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 价格服务类
@@ -61,15 +63,22 @@ public class PriceService {
 
   /**
    * 更新预估价格
-   * @param typeId 物品编号
-   * @param adjustedPrice 调整价格
-   * @param averagePrice 平均价格
+   *
+   * @param array 等待更新的数据
    * @return 更新结果
    */
-  public Completable updateEIV(int typeId, Float adjustedPrice, Float averagePrice) {
-    LocalDateTime now = LocalDateTime.now();
-    String sql = "INSERT INTO item_eiv(item_id, adjusted_price, average_price, updated_at) VALUES($1, $2, $3, $4) ON CONFLICT(item_id) DO UPDATE SET adjusted_price = $2, average_price = $3, updated_at = $4";
-    Tuple params = Tuple.of(typeId, adjustedPrice, averagePrice, now);
-    return pgPool.preparedQuery(sql).rxExecute(params).ignoreElement();
+  public Completable updateEIV(JsonArray array) {
+    return Observable.<List<Tuple>>create(emitter -> {
+      List<Tuple> tuples = array.stream().map(item -> (JsonObject) item).map(item -> {
+        Integer typeId = item.getInteger("type_id");
+        Float adjustedPrice = item.getFloat("adjusted_price");
+        Float averagePrice = item.getFloat("average_price");
+        return Tuple.of(typeId, adjustedPrice, averagePrice);
+      }).collect(Collectors.toList());
+      emitter.onNext(tuples);
+    }).subscribeOn(Schedulers.computation()).flatMap(tuples -> {
+      String sql = "INSERT INTO item_eiv(item_id, adjusted_price, average_price, updated_at) VALUES($1, $2, $3, current_timestamp) ON CONFLICT(item_id) DO UPDATE SET adjusted_price = $2, average_price = $3, updated_at = current_timestamp";
+      return pgPool.preparedQuery(sql).rxExecuteBatch(tuples).toObservable();
+    }).ignoreElements();
   }
 }
