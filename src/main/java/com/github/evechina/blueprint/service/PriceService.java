@@ -12,6 +12,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Row;
+import io.vertx.reactivex.sqlclient.RowIterator;
 import io.vertx.reactivex.sqlclient.Tuple;
 import java.util.List;
 import java.util.Objects;
@@ -58,7 +60,31 @@ public class PriceService {
       .rxSend().flatMap(rsp -> {
         JsonObject jsonObject = rsp.body().toJsonObject();
         return Single.just(jsonObject.getJsonObject("sell"));
-      }).observeOn(Schedulers.io());
+      }).flatMap(sell -> {
+        return getItemEIV(typeId).flatMap(eiv -> {
+          sell.put("eiv", eiv);
+          return Single.just(sell);
+        });
+      });
+  }
+
+  /**
+   * @param typeId 编号
+   * @return 查询结果, 如果没记录则返回空json
+   */
+  public Single<JsonObject> getItemEIV(int typeId) {
+    String sql = "SELECT adjusted_price, average_price, updated_at FROM item_eiv WHERE item_id = $1";
+    return pgPool.preparedQuery(sql).rxExecute(Tuple.of(typeId)).flatMap(rowSet -> {
+      RowIterator<Row> iterator = rowSet.iterator();
+      JsonObject eiv = new JsonObject();
+      if (iterator.hasNext()) {
+        Row row = iterator.next();
+        eiv.put("adjusted_price", row.getFloat("adjusted_price"));
+        eiv.put("average_price", row.getFloat("average_price"));
+        eiv.put("updated_at", row.getFloat("updated_at"));
+      }
+      return Single.just(eiv);
+    });
   }
 
   /**
