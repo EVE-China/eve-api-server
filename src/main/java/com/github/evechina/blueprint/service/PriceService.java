@@ -15,6 +15,7 @@ import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Row;
 import io.vertx.reactivex.sqlclient.RowIterator;
 import io.vertx.reactivex.sqlclient.Tuple;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -81,7 +82,7 @@ public class PriceService {
         Row row = iterator.next();
         eiv.put("adjusted_price", row.getFloat("adjusted_price"));
         eiv.put("average_price", row.getFloat("average_price"));
-        eiv.put("updated_at", row.getFloat("updated_at"));
+        eiv.put("updated_at", row.getLocalDateTime("updated_at").format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
       }
       return Single.just(eiv);
     });
