@@ -24,7 +24,7 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
     webClient = WebClient.create(vertx);
     // 1小时更新一次eiv
     updateEIV();
-    vertx.periodicStream(3600000).toObservable().subscribe(unused -> {
+    vertx.periodicStream(3600000).handler(unused -> {
       updateEIV();
     });
     return super.rxStart();
