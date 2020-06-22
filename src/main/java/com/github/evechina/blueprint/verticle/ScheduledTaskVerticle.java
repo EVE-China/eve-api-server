@@ -2,9 +2,7 @@ package com.github.evechina.blueprint.verticle;
 
 import com.github.evechina.blueprint.service.PriceService;
 import io.reactivex.Completable;
-import io.reactivex.Observable;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -26,7 +24,9 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
     webClient = WebClient.create(vertx);
     // 1小时更新一次eiv
     updateEIV();
-    vertx.timerStream(3600000).toObservable().subscribe();
+    vertx.periodicStream(3600000).toObservable().subscribe(unused -> {
+      updateEIV();
+    });
     return super.rxStart();
   }
 
