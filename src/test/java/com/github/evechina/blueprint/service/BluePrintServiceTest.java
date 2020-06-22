@@ -1,5 +1,6 @@
 package com.github.evechina.blueprint.service;
 
+import com.github.evechina.blueprint.utils.PgPoolHelper;
 import com.github.evechina.blueprint.verticle.MainVerticle;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -17,6 +18,7 @@ class BluePrintServiceTest {
   static void init(Vertx vertx) {
     JsonObject config = vertx.fileSystem().readFileBlocking("conf/config.json").toJsonObject();
     PgPool client = MainVerticle.initPgPool(vertx, config.getJsonObject("db"));
+    PgPoolHelper.init(client);
     BluePrintService.init();
   }
 
