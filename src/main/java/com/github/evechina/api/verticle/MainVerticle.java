@@ -1,8 +1,8 @@
-package com.github.evechina.blueprint.verticle;
+package com.github.evechina.api.verticle;
 
-import com.github.evechina.blueprint.service.BluePrintService;
-import com.github.evechina.blueprint.service.PriceService;
-import com.github.evechina.blueprint.utils.PgPoolHelper;
+import com.github.evechina.api.service.BluePrintService;
+import com.github.evechina.api.service.PriceService;
+import com.github.evechina.api.utils.PgPoolHelper;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.vertx.core.DeploymentOptions;

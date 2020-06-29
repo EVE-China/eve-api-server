@@ -1,14 +1,12 @@
-package com.github.evechina.blueprint;
+package com.github.evechina.api;
 
-import com.github.evechina.blueprint.verticle.MainVerticle;
+import com.github.evechina.api.verticle.MainVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(VertxExtension.class)
 public class TestMainVerticle {
@@ -19,7 +17,7 @@ public class TestMainVerticle {
   }
 
   @Test
-  void verticle_deployed(Vertx vertx, VertxTestContext testContext) throws Throwable {
+  void verticle_deployed(Vertx vertx, VertxTestContext testContext) {
     testContext.completeNow();
   }
 }

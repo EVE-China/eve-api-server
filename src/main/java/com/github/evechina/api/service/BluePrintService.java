@@ -1,6 +1,6 @@
-package com.github.evechina.blueprint.service;
+package com.github.evechina.api.service;
 
-import com.github.evechina.blueprint.utils.PgPoolHelper;
+import com.github.evechina.api.utils.PgPoolHelper;
 import domain.*;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;

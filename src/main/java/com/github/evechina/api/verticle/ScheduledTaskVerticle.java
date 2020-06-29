@@ -1,6 +1,6 @@
-package com.github.evechina.blueprint.verticle;
+package com.github.evechina.api.verticle;
 
-import com.github.evechina.blueprint.service.PriceService;
+import com.github.evechina.api.service.PriceService;
 import io.reactivex.Completable;
 import io.vertx.core.json.JsonArray;
 import io.vertx.reactivex.core.AbstractVerticle;

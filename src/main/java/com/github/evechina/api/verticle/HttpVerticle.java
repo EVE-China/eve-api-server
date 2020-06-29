@@ -1,7 +1,7 @@
-package com.github.evechina.blueprint.verticle;
+package com.github.evechina.api.verticle;
 
-import com.github.evechina.blueprint.controller.BluePrintController;
-import com.github.evechina.blueprint.controller.TypeController;
+import com.github.evechina.api.controller.BluePrintController;
+import com.github.evechina.api.controller.TypeController;
 import io.reactivex.Completable;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;

@@ -1,4 +1,4 @@
-package com.github.evechina.blueprint.utils;
+package com.github.evechina.api.utils;
 
 /**
  * A simple paired value class

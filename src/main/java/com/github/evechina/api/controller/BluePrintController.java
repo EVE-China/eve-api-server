@@ -1,6 +1,6 @@
-package com.github.evechina.blueprint.controller;
+package com.github.evechina.api.controller;
 
-import com.github.evechina.blueprint.service.BluePrintService;
+import com.github.evechina.api.service.BluePrintService;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;

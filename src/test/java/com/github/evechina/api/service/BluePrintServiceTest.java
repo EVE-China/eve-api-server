@@ -1,7 +1,7 @@
-package com.github.evechina.blueprint.service;
+package com.github.evechina.api.service;
 
-import com.github.evechina.blueprint.utils.PgPoolHelper;
-import com.github.evechina.blueprint.verticle.MainVerticle;
+import com.github.evechina.api.utils.PgPoolHelper;
+import com.github.evechina.api.verticle.MainVerticle;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;

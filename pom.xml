@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.github.evechina</groupId>
-  <artifactId>blueprint-service</artifactId>
+  <artifactId>api-service</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
   <properties>
@@ -19,7 +19,7 @@
     <vertx.version>3.9.1</vertx.version>
     <junit-jupiter.version>5.4.0</junit-jupiter.version>
 
-    <main.verticle>com.github.evechina.blueprint.verticle.MainVerticle</main.verticle>
+    <main.verticle>com.github.evechina.api.verticle.MainVerticle</main.verticle>
   </properties>
 
   <dependencyManagement>

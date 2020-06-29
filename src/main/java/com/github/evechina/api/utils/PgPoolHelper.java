@@ -1,4 +1,4 @@
-package com.github.evechina.blueprint.utils;
+package com.github.evechina.api.utils;
 
 import io.vertx.reactivex.pgclient.PgPool;
 
