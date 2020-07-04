@@ -8,8 +8,6 @@
 因此在初次使用时需要手动执行sde的sql脚本.
 [sde数据来源](https://github.com/EVE-China/sde-to-sql)
 
-2. 注意数据库的时区.
-
 # 项目启动
 
 ```sh
