@@ -30,6 +30,9 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
     return super.rxStart();
   }
 
+  /**
+   * 更新eiv
+   */
   private void updateEIV() {
     webClient
       .getAbs("https://esi.evepc.163.com/latest/markets/prices/?datasource=serenity").putHeader("accept", "application/json")
