@@ -11,5 +11,7 @@ CREATE TABLE market_order
     system_id     bigint                   not null,
     type_id       bigint                   not null,
     volume_remain int                      not null,
-    volume_total  int                      not null
+    volume_total  int                      not null,
+    updated       timestamp with time zone not null,
+    region_id     bigint                   not null
 );

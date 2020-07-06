@@ -1,6 +1,7 @@
 package com.github.evechina.api.verticle;
 
 import com.github.evechina.api.service.BluePrintService;
+import com.github.evechina.api.service.OrderService;
 import com.github.evechina.api.service.PriceService;
 import com.github.evechina.api.utils.PgPoolHelper;
 import io.reactivex.Completable;
@@ -28,6 +29,7 @@ public class MainVerticle extends AbstractVerticle {
     PgPoolHelper.init(pgPool);
     BluePrintService.init();
     PriceService.init(vertx);
+    OrderService.init();
     return deploy(new HttpVerticle())
       .flatMap(unused -> deployWorker(new ScheduledTaskVerticle()))
       .ignoreElement();
