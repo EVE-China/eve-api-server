@@ -85,25 +85,20 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
           return;
         }
         if (array.size() > 0) {
-          Completable completable;
-          // 只有在第一页时清理数据
           if (1 == page) {
-            completable = orderService.cleanupExpiredData();
             log.info("开始处理订单数据");
-          } else {
-            completable = Completable.complete();
           }
-          completable.subscribe(() -> {
-            orderService.updateOrders(10000002, array).subscribe(() -> {
-              log.debug("获取第{}页订单数据成功", page);
-              next.accept(page + 1);
-            }, err -> {
-              log.error("获取第{}页订单数据失败", page, err);
-              next.accept(page + 1);
-            });
+          orderService.updateOrders(10000002, array).subscribe(() -> {
+            log.debug("获取第{}页订单数据成功", page);
+            next.accept(page + 1);
+          }, err -> {
+            log.error("获取第{}页订单数据失败", page, err);
+            next.accept(page + 1);
           });
         } else {
           log.info("订单数据处理结束");
+          // 清理数据
+          orderService.cleanupExpiredData();
           nextDelay.run();
         }
       }, err -> {
