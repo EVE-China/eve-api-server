@@ -98,7 +98,7 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
         } else {
           log.info("订单数据处理结束");
           // 清理数据
-          orderService.cleanupExpiredData();
+          orderService.cleanupExpiredData().subscribe();
           nextDelay.run();
         }
       }, err -> {

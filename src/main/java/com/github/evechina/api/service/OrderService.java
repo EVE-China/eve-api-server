@@ -6,6 +6,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +16,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class OrderService {
+
+  private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
   private static OrderService instance = null;
 
@@ -33,7 +37,10 @@ public class OrderService {
   public Completable cleanupExpiredData() {
     // 删除1小时之前创建的数据
     String sql = "DELETE FROM market_order WHERE extract(hour from current_timestamp - updated) > 1";
-    return pool.query(sql).rxExecute().ignoreElement();
+    return pool.query(sql).rxExecute().flatMapCompletable(rowSet -> {
+      log.info("已清理{}条过期订单数据", rowSet.rowCount());
+      return Completable.complete();
+    });
   }
 
   /**
