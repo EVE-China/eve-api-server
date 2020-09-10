@@ -61,7 +61,12 @@ public class PriceService {
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
       .rxSend().flatMap(rsp -> {
         JsonObject jsonObject = rsp.body().toJsonObject();
-        return Single.just(jsonObject.getJsonObject("sell"));
+        JsonObject body = new JsonObject();
+        // 卖价
+        body.put("sell", jsonObject.getJsonObject("sell"));
+        // 买价
+        body.put("buy", jsonObject.getJsonObject("buy"));
+        return Single.just(body);
       }).flatMap(sell -> {
         return getItemEIV(typeId).flatMap(eiv -> {
           sell.put("eiv", eiv);
