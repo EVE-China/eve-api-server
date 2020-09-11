@@ -43,6 +43,7 @@ public class ScheduledTaskVerticle extends AbstractVerticle {
    * 更新eiv
    */
   private void updateEIV() {
+    log.info("开始更新eiv");
     webClient
       .getAbs("https://esi.evepc.163.com/latest/markets/prices/?datasource=serenity").putHeader("accept", "application/json")
       .rxSend().flatMap(rsp -> Single.just(rsp.bodyAsJsonArray()))

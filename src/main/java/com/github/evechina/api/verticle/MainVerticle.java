@@ -31,7 +31,7 @@ public class MainVerticle extends AbstractVerticle {
     PriceService.init(vertx);
     OrderService.init();
     return deploy(new HttpVerticle())
-      .flatMap(unused -> deployWorker(new ScheduledTaskVerticle()))
+      .flatMap(unused -> deploy(new ScheduledTaskVerticle()))
       .ignoreElement();
   }
 
