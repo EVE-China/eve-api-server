@@ -1,7 +1,10 @@
 const path = require('path');
 
 module.exports = {
-  entry: './index.ts',
+  entry: {
+    index: './index.ts',
+    'scheduled-task': './scheduled-task.ts'
+  },
   module: {
     rules: [
       {
@@ -15,7 +18,7 @@ module.exports = {
     extensions: [ '.ts', '.js' ],
   },
   output: {
-    filename: 'index.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
   },
   devtool: 'source-map'
